@@ -26,7 +26,6 @@ def subsets(arr):
     """ Returns non empty subsets of arr"""
     return chain(*[combinations(arr, i + 1) for i, a in enumerate(arr)])
 
-
 def returnItemsWithMinSupport(itemSet, transactionList, minSupport, freqSet):
         """calculates the support for items in the itemSet and returns a subset
        of the itemSet each of whose elements satisfies the minimum support"""
