@@ -2,9 +2,7 @@
 #-*-coding=utf-8-*-
 #author shizhongxian@126.com
 
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import ConfigParser
 import logging
 
@@ -14,32 +12,12 @@ logging.basicConfig(level=logging.DEBUG,
                 filename='apriori.log',
                 filemode='a')
 
-global buckets
-global ranks
-global buckets
 global buckets_dicts
 
-#
-buckets = [[ float('-Inf'),-1.0],[ -1.0,-0.8],[ -0.8,-0.6],[ -0.6,-0.4],
-               [ -0.4,-0.2],[ -0.2,0.0],[ 0.0,0.2],[ 0.2,0.4],[ 0.4,0.6],
-               [ 0.6,0.8],[ 0.8,1.0],[ 1.0,float('Inf')]]
-ranks = list('ABCDEFGHIJKL')
-
-#
-#buckets = [[ float('-Inf'),-1.0],[ -1.0,-0.5],[ -0.5,0.0],[ 0.0,0.5],[ 0.5,1.0],[ 1.0,float('Inf')]]
-#ranks = list('ABCDEF')
-
-#产生比值区间及标识符设定
-buckets_dict = {}
-for i in range(len(buckets)):
-    key = tuple(buckets[i])
-    value = ranks[i]
-    buckets_dict[key] = value
-
 def get_flag(value):
-        for key in buckets_dict.keys():
+        for key in buckets_dicts.keys():
             if key[0]<=value and value <= key[1]:
-                return buckets_dict[key]
+                return buckets_dicts[key]
         return None
 
 #求环比
@@ -54,6 +32,22 @@ def hb_ratio(tmp_list):
         ratio_list.append(round((tmp_list[i]-tmp_list[i-1])/tmp_list[i-1],2))
     return ratio_list
 
+def delete_empty_month(df,indicators):
+    '''
+    删除指标数据不全的月份
+    '''
+    inter_set = set()
+    months_list = []
+    for indicator in indicators:
+        indi_data = df[df.indicator.isin([indicator])]
+        months = set(indi_data["month"].tolist())
+        months_list.append(months)
+    inter_set = set(months_list[0])
+    for months in months_list:
+        inter_set = inter_set.intersection(months)
+    inter_list = list(inter_set)
+    return df[df.month.isin([inter_list])]
+
 def comb_str(list_one,list_two):
     result = []
     if len(list_one) == len(list_two):
@@ -63,7 +57,7 @@ def comb_str(list_one,list_two):
     else:
         return None
 
-def indicator_classify(datafile,months=48,buckets_cls='small'):
+def indicator_classify(datafile,buckets_cls='small'):
     '''
     计算指标时间序列变动，根据变动范围对指标归类
     传入文件包括 '月份顺序排序, '地区',  '正式指标', '正式数值', '正式单位'
@@ -83,26 +77,23 @@ def indicator_classify(datafile,months=48,buckets_cls='small'):
                                 '正式指标':'indicator', '正式数值':'value', '正式单位':'unit'})
     #所有指标
     indicators = data.indicator.unique()
+    #过滤掉月份数据不足的指标数据
+    data = delete_empty_month(data, indicators)
     print "calculate indicator num ratio"
     con_list = []
     iterr = 0
     for indicator in indicators:
+        ratio_data = None
         iterr += 1
         if iterr % 200 == 0:
             print iterr
         #print indicator
         indi_data = data[data.indicator.isin([indicator])]
         sort_data =  indi_data.sort(columns='month')
-        months_list = sort_data["month"].tolist()
         unit_set = set(sort_data["unit"].tolist())
         #过滤掉单位不统一的指标数据
         if len(unit_set) != 1:
             #print "unit error"
-            continue
-        #过滤掉月份数据不足的指标数据
-        if len(months_list) != months:
-            #print 'month error',len(months_list)
-            #print indicator
             continue
         nums_list = sort_data["value"].tolist()
         ratio_list = hb_ratio(nums_list)
@@ -157,7 +148,7 @@ def indicator_classify(datafile,months=48,buckets_cls='small'):
             
 if __name__ == "__main__":
     #indicator_classify("2011_2014_single_month_table.txt")
-    indicator_classify("jck_table.txt",months=48,buckets_cls='small')
+    indicator_classify("jck_table.txt",buckets_cls='small')
     print "End!!"
     
     

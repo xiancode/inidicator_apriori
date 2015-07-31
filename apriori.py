@@ -13,6 +13,7 @@ from itertools import chain, combinations
 from collections import defaultdict
 from optparse import OptionParser
 from _codecs import encode
+from numpy import record
 
 def tuple_str(tu):
     '''
@@ -141,6 +142,12 @@ def dataFromFile(fname):
                 line = line.strip()
                 record = frozenset(line.split('\t'))
                 yield record
+                
+def dataFromList(l):
+    """Function which reads from the file and yields a generator"""
+    for line in l:
+        record = frozenset(line)
+        yield record
 
 
 if __name__ == "__main__":
