@@ -5,10 +5,19 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import ConfigParser
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                datefmt='%a, %d %b %Y %H:%M:%S',
+                filename='apriori.log',
+                filemode='a')
 
 global buckets
 global ranks
 global buckets
+global buckets_dicts
 
 #
 buckets = [[ float('-Inf'),-1.0],[ -1.0,-0.8],[ -0.8,-0.6],[ -0.6,-0.4],
@@ -54,11 +63,19 @@ def comb_str(list_one,list_two):
     else:
         return None
 
-def indicator_classify(datafile,months=48):
+def indicator_classify(datafile,months=48,buckets_cls='small'):
     '''
     计算指标时间序列变动，根据变动范围对指标归类
     传入文件包括 '月份顺序排序, '地区',  '正式指标', '正式数值', '正式单位'
     '''
+    cf = ConfigParser.ConfigParser()
+    cf.read('apriori.cfg')
+    #get buckets
+    try:
+        buckets_dicts = eval(cf.get('buckets_dicts', buckets_cls))
+    except Exception,e:
+        print  "配置文件中buckets_dicts 获取失败",e
+        
     #载入数据
     data = pd.read_table(datafile)
     #列名重命名
@@ -140,7 +157,7 @@ def indicator_classify(datafile,months=48):
             
 if __name__ == "__main__":
     #indicator_classify("2011_2014_single_month_table.txt")
-    indicator_classify("jck_table.txt")
+    indicator_classify("jck_table.txt",months=48,buckets_cls='small')
     print "End!!"
     
     
