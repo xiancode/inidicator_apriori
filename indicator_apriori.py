@@ -1,7 +1,10 @@
 #!/usr/bin/env  python
 #-*-coding=utf-8-*-
-#author shizhongxian@126.com
-
+'''
+Description     : statistic indicator rules mining  of the Apriori Algorithm
+author shizhongxian@126.com
+usage  $python indicator_apriori.py  -f jck_table.txt  -s 0.10 -c 0.10 -b small
+'''
 import sys
 import pandas as pd
 import ConfigParser
