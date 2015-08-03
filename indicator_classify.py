@@ -2,9 +2,12 @@
 #-*-coding=utf-8-*-
 #author shizhongxian@126.com
 
+import sys
 import pandas as pd
 import ConfigParser
 import logging
+from optparse import OptionParser
+import apriori
 
 logging.basicConfig(level=logging.DEBUG,
                 format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
@@ -13,12 +16,6 @@ logging.basicConfig(level=logging.DEBUG,
                 filemode='a')
 
 global buckets_dicts
-
-def get_flag(value):
-        for key in buckets_dicts.keys():
-            if key[0]<=value and value <= key[1]:
-                return buckets_dicts[key]
-        return None
 
 #求环比
 def hb_ratio(tmp_list):
@@ -46,7 +43,7 @@ def delete_empty_month(df,indicators):
     for months in months_list:
         inter_set = inter_set.intersection(months)
     inter_list = list(inter_set)
-    return df[df.month.isin([inter_list])]
+    return df[df.month.isin(inter_list)]
 
 def comb_str(list_one,list_two):
     result = []
@@ -57,7 +54,7 @@ def comb_str(list_one,list_two):
     else:
         return None
 
-def indicator_classify(datafile,buckets_cls='small'):
+def indicator_classify(datafile,buckets_cls):
     '''
     计算指标时间序列变动，根据变动范围对指标归类
     传入文件包括 '月份顺序排序, '地区',  '正式指标', '正式数值', '正式单位'
@@ -70,6 +67,12 @@ def indicator_classify(datafile,buckets_cls='small'):
     except Exception,e:
         print  "配置文件中buckets_dicts 获取失败",e
         
+    def get_flag(value):
+        for key in buckets_dicts.keys():
+            if key[0]<=value and value <= key[1]:
+                return buckets_dicts[key]
+        return None    
+    
     #载入数据
     data = pd.read_table(datafile)
     #列名重命名
@@ -145,10 +148,51 @@ def indicator_classify(datafile,buckets_cls='small'):
             #f.write(k+"\t")
             f.write('\t'.join(value_list))
             f.write("\n")
+    return flag_indi_dict.values()
             
 if __name__ == "__main__":
-    #indicator_classify("2011_2014_single_month_table.txt")
-    indicator_classify("jck_table.txt",buckets_cls='small')
+    optparser = OptionParser()
+    optparser.add_option('-f', '--inputFile',
+                         dest='input',
+                         help='filename containing csv convert from rec',
+                         default=None)
+    optparser.add_option('-s', '--minSupport',
+                         dest='minS',
+                         help='minimum support value',
+                         default=0.15,
+                         type='float')
+    optparser.add_option('-c', '--minConfidence',
+                         dest='minC',
+                         help='minimum confidence value',
+                         default=0.3,
+                         type='float')
+    optparser.add_option('-b', '--classInterval',
+                         dest='buckets_cls',
+                         help='gradient interval class',
+                         default='small')
+    
+    (options, args) = optparser.parse_args()
+    
+    inFile = None
+    if options.input is None:
+            inFile = sys.stdin
+            #inFile = "INTEGRATED-DATASET.csv"
+    elif options.input is not None:
+            inFile = options.input
+    else:
+            print 'No dataset filename specified, system with exit\n'
+            sys.exit('System will exit')
+    
+    minSupport = options.minS
+    minConfidence = options.minC
+    buckets_cls = options.buckets_cls
+    
+    #apri_indi_set = indicator_classify("jck_table.txt",buckets_cls)
+    apri_indi_set = indicator_classify(inFile,buckets_cls)
+    print "excute apriori algorithm"
+    inFile = apriori.dataFromList(apri_indi_set)
+    items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
+    apriori.printResults(items, rules)
     print "End!!"
     
     
