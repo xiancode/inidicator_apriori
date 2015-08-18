@@ -2,6 +2,7 @@
 #-*-coding=utf-8-*-
 '''
 Description     : statistic indicator rules mining  of the Apriori Algorithm
+require :pandas-0.16.2-py2.7
 author shizhongxian@126.com
 usage  $python indicator_apriori.py  -f jck_table.txt  -s 0.10 -c 0.10 -b small
 '''
@@ -118,12 +119,11 @@ def indicator_classify(datafile,buckets_cls):
     com_list = comb_str(months_list,flag_list)
     com_list
     all_data['comb_str'] = pd.Series(com_list)
-    
-    #
-    with open("four_year_indicators.txt","w") as fi:
-        caled_indicators = all_data.indicator.unique()
-        for tmp_ in caled_indicators:
-            fi.write(tmp_+"\n")
+
+#     with open("four_year_indicators.txt","w") as fi:
+#         caled_indicators = all_data.indicator.unique()
+#         for tmp_ in caled_indicators:
+#             fi.write(tmp_+"\n")
     
     #转化成  月份_标识符---->[指标1,指标2,.....]形式
     indi_dict = all_data['indicator'].to_dict()
