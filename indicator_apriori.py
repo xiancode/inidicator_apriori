@@ -96,7 +96,8 @@ def indicator_classify(datafile,buckets_cls):
             print iterr
         #print indicator
         indi_data = data[data.indicator.isin([indicator])]
-        sort_data =  indi_data.sort(columns='month')
+        #sort_data =  indi_data.sort(columns='month')
+        sort_data =  indi_data
         unit_set = set(sort_data["unit"].tolist())
         #过滤掉单位不统一的指标数据
         if len(unit_set) != 1:
@@ -193,14 +194,14 @@ if __name__ == "__main__":
     minConfidence = options.minC
     buckets_cls = options.buckets_cls
     #C# 调用
-    def C_shape(inFile,buckets_cls,minSupport, minConfidence):
-        '''
-        C_shape 
-        '''
-        apri_indi_set = indicator_classify(inFile,buckets_cls)
-        nFile = apriori.dataFromList(apri_indi_set)
-        items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
-        apriori.printResults(items, rules)
+#     def C_shape(inFile,buckets_cls,minSupport, minConfidence):
+#         '''
+#         C_shape 
+#         '''
+#         apri_indi_set = indicator_classify(inFile,buckets_cls)
+#         inFile = apriori.dataFromList(apri_indi_set)
+#         items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
+#         apriori.printResults(items, rules)
         
     
     
