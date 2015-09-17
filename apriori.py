@@ -125,21 +125,22 @@ def printResults(items, rules):
     fout = open("rules_result.txt","w")
     for item, support in sorted(items, key=lambda (item, support): support):
         if type(item) is tuple:
-            print "item: %s , %.3f" % (str(tuple_str(item)), support)
+            #print "item: %s , %.3f" % (str(tuple_str(item)), support)
             fout.write("item: %s , %.3f" % (str(tuple_str(item)), support))
             fout.write("\n")
             continue
-        print "item: %s , %.3f" % (str(item), support)
+        #print "item: %s , %.3f" % (str(item), support)
         fout.write("item: %s , %.3f" % (str(item), support))
         fout.write("\n")
-    print "\n------------------------ RULES:"
+    #print "\n------------------------ RULES:"
     fout.write("\n------------------------ RULES:"+"\n")
     for rule, confidence in sorted(rules, key=lambda (rule, confidence): confidence):
         pre, post = rule
-        print "Rule: %s ==> %s , %.3f" % (str(tuple_str(pre)), str(tuple_str(post)), confidence)
+        #print "Rule: %s ==> %s , %.3f" % (str(tuple_str(pre)), str(tuple_str(post)), confidence)
         fout.write("Rule: %s ==> %s , %.3f" % (str(tuple_str(pre)), str(tuple_str(post)), confidence))
         fout.write("\n")
     fout.close()
+    print "The results have saved rules_result.txt"
 
 
 def dataFromFile(fname):

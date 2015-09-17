@@ -194,17 +194,20 @@ if __name__ == "__main__":
     minConfidence = options.minC
     buckets_cls = options.buckets_cls
     #C# 调用
-#     def C_shape(inFile,buckets_cls,minSupport, minConfidence):
-#         '''
-#         C_shape 
-#         '''
-#         apri_indi_set = indicator_classify(inFile,buckets_cls)
-#         inFile = apriori.dataFromList(apri_indi_set)
-#         items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
-#         apriori.printResults(items, rules)
+    def C_shape(inFile,buckets_cls,minSupport, minConfidence):
+        '''
+        C_shape 
+        '''
+        try:
+            apri_indi_set = indicator_classify(inFile,buckets_cls)
+            inFile = apriori.dataFromList(apri_indi_set)
+            items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
+            apriori.printResults(items, rules)
+        except Exception,e:
+            logging.error("apriori api error",e)
+        else:
+            logging.info("apriori api has execute successfully  ")
         
-    
-    
     apri_indi_set = indicator_classify("test.txt",buckets_cls)
     #apri_indi_set = indicator_classify(inFile,buckets_cls)
     print "excute apriori algorithm"
