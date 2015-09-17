@@ -1,9 +1,9 @@
 #!/usr/bin/env  python
 #-*-coding=utf-8-*-
 '''
-Description     : statistic indicator rules mining  of the Apriori Algorithm
-require :pandas-0.16.2-py2.7
-author shizhongxian@126.com
+Description : statistic indicator rules mining  of the Apriori Algorithm
+require     :pandas-0.16.2-py2.7
+author      : shizhongxian@126.com
 usage  $python indicator_apriori.py  -f jck_table.txt  -s 0.10 -c 0.10 -b small
 '''
 import sys
@@ -80,7 +80,7 @@ def indicator_classify(datafile,buckets_cls):
     #载入数据
     data = pd.read_table(datafile)
     #列名重命名
-    data = data.rename(columns={'月份顺序排序':'month', '地区':'area', 
+    data = data.rename(columns={'时间顺序排序':'month', '地区':'area', 
                                 '正式指标':'indicator', '正式数值':'value', '正式单位':'unit'})
     #所有指标
     indicators = data.indicator.unique()
@@ -115,6 +115,8 @@ def indicator_classify(datafile,buckets_cls):
     all_data = pd.concat(con_list,ignore_index=True)
     #形成新的列  年/月份_标识符   201101_K 的样式  
     months_list = all_data["month"].tolist()
+    #保存第一个时间点
+    start_time = months_list[0]
     flag_list = all_data["flag"].tolist()
     com_list = comb_str(months_list,flag_list)
     com_list
@@ -133,7 +135,8 @@ def indicator_classify(datafile,buckets_cls):
     for key,indicator in indi_dict.iteritems():
         if flag_dict.has_key(key):
             flag = flag_dict[key]
-            if flag.find('201101') != -1:
+            #去掉第一个时间段，因为第一个时间段所有指标环比都默认为1
+            if flag.find(start_time) != -1:
                 continue
             if flag_indi_dict.has_key(flag):
                 flag_indi_dict[flag].append(indicator)
@@ -189,9 +192,20 @@ if __name__ == "__main__":
     minSupport = options.minS
     minConfidence = options.minC
     buckets_cls = options.buckets_cls
+    #C# 调用
+    def C_shape(inFile,buckets_cls,minSupport, minConfidence):
+        '''
+        C_shape 
+        '''
+        apri_indi_set = indicator_classify(inFile,buckets_cls)
+        nFile = apriori.dataFromList(apri_indi_set)
+        items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
+        apriori.printResults(items, rules)
+        
     
-    #apri_indi_set = indicator_classify("jck_table.txt",buckets_cls)
-    apri_indi_set = indicator_classify(inFile,buckets_cls)
+    
+    apri_indi_set = indicator_classify("test.txt",buckets_cls)
+    #apri_indi_set = indicator_classify(inFile,buckets_cls)
     print "excute apriori algorithm"
     inFile = apriori.dataFromList(apri_indi_set)
     items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
