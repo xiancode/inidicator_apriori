@@ -7,24 +7,36 @@ author      : shizhongxian@126.com
 usage  $python indicator_apriori.py  -f jck_table.txt  -s 0.10 -c 0.10 -b small
 '''
 import sys
+import os
 import pandas as pd
 import ConfigParser
 import logging
 from optparse import OptionParser
 import apriori
 
+global buckets_dicts
+global cfg_file_name 
+global log_file_name
+
 logging.basicConfig(level=logging.DEBUG,
                 format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                 datefmt='%a, %d %b %Y %H:%M:%S',
-                filename='apriori.log',
+                filename="C:\\LOG\\apriori.log",
                 filemode='a')
 
-global buckets_dicts
-
+def get_cfg_filename(fullname):
+    '''
+        获取配置文件全名
+    '''
+    dir_name = os.path.dirname(fullname)
+    par_name = os.path.dirname(dir_name)
+    cfg_filename = par_name + "\\inidicator_apriori\\apriori.cfg"
+    return cfg_filename
+    
 #求环比
 def hb_ratio(tmp_list):
     '''
-   求环比 
+       求环比 
     '''
     ratio_list=[]
     ratio_list.append(1.0)
@@ -35,7 +47,7 @@ def hb_ratio(tmp_list):
 
 def delete_empty_month(df,indicators):
     '''
-    删除指标数据不全的月份
+        删除指标数据不全的月份
     '''
     inter_set = set()
     months_list = []
@@ -60,16 +72,20 @@ def comb_str(list_one,list_two):
 
 def indicator_classify(datafile,buckets_cls):
     '''
-    计算指标时间序列变动，根据变动范围对指标归类
-    传入文件包括 '月份顺序排序, '地区',  '正式指标', '正式数值', '正式单位'
+        计算指标时间序列变动，根据变动范围对指标归类
+        传入文件包括 '月份顺序排序, '地区',  '正式指标', '正式数值', '正式单位'
     '''
-    cf = ConfigParser.ConfigParser()
-    cf.read('apriori.cfg')
+    try:
+        cf = ConfigParser.ConfigParser()
+        #cf.read('E:\\inidicator_apriori\\apriori.cfg')
+        cf.read(cfg_file_name)
+    except Exception,e:
+        print "load cfg failed"
     #get buckets
     try:
         buckets_dicts = eval(cf.get('buckets_dicts', buckets_cls))
     except Exception,e:
-        print  "配置文件中buckets_dicts 获取失败",e
+        print  "get buckets_dicts failed",e
         
     def get_flag(value):
         for key in buckets_dicts.keys():
@@ -137,7 +153,7 @@ def indicator_classify(datafile,buckets_cls):
         if flag_dict.has_key(key):
             flag = flag_dict[key]
             #去掉第一个时间段，因为第一个时间段所有指标环比都默认为1
-            if flag.find(start_time) != -1:
+            if flag.find(str(start_time)) != -1:
                 continue
             if flag_indi_dict.has_key(flag):
                 flag_indi_dict[flag].append(indicator)
@@ -194,26 +210,37 @@ if __name__ == "__main__":
     minConfidence = options.minC
     buckets_cls = options.buckets_cls
     #C# 调用
-    def C_shape(inFile,buckets_cls,minSupport, minConfidence):
-        '''
-        C_shape 
-        '''
-        try:
-            apri_indi_set = indicator_classify(inFile,buckets_cls)
-            inFile = apriori.dataFromList(apri_indi_set)
-            items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
-            apriori.printResults(items, rules)
-        except Exception,e:
-            logging.error("apriori api error",e)
-        else:
-            logging.info("apriori api has execute successfully  ")
+#     def C_shape(inFile,buckets_cls,minSupport, minConfidence):
+#         '''
+#         C_shape 
+#         '''
+#         try:
+#             apri_indi_set = indicator_classify(inFile,buckets_cls)
+#             inFile = apriori.dataFromList(apri_indi_set)
+#             items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
+#             apriori.printResults(items, rules)
+#         except Exception,e:
+#             logging.error("apriori api error",e)
+#         else:
+#             logging.info("apriori api has execute successfully  ")
         
-    apri_indi_set = indicator_classify("test.txt",buckets_cls)
-    #apri_indi_set = indicator_classify(inFile,buckets_cls)
-    print "excute apriori algorithm"
-    inFile = apriori.dataFromList(apri_indi_set)
-    items, rules = apriori.runApriori(inFile, minSupport, minConfidence)
-    apriori.printResults(items, rules)
+    #apri_indi_set = indicator_classify("test.txt",buckets_cls)
+    inFile = "C:\Users\Administrator\Desktop\jck_table.txt"
+    full_name = os.path.realpath(inFile)
+    cfg_file_name = get_cfg_filename(full_name)
+    pos = full_name.find(".txt")
+    result_name = full_name[:pos] + "_result.txt"
+    
+    try:
+        apri_indi_set = indicator_classify(inFile,buckets_cls)
+        print "excute apriori algorithm"
+        rows_file = apriori.dataFromList(apri_indi_set)
+        items, rules = apriori.runApriori(rows_file, minSupport, minConfidence)
+        apriori.printResults(items, rules,result_name)
+    except Exception,e:
+        logging.error("apriori api error",e)
+    else:
+        logging.info("apriori api has execute successfully  ")
     print "End!!"
     
     
