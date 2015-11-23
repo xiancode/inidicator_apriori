@@ -30,7 +30,7 @@ def get_cfg_filename(fullname):
     '''
     dir_name = os.path.dirname(fullname)
     par_name = os.path.dirname(dir_name)
-    cfg_filename = par_name + "\\inidicator_apriori\\apriori.cfg"
+    cfg_filename = par_name + "\\indicator_apriori\\apriori.cfg"
     return cfg_filename
     
 #求环比
@@ -73,20 +73,23 @@ def comb_str(list_one,list_two):
 def indicator_classify(datafile,buckets_cls):
     '''
         计算指标时间序列变动，根据变动范围对指标归类
-        传入文件包括 '月份顺序排序, '地区',  '正式指标', '正式数值', '正式单位'
+        传入文件包括 '时间顺序排序, '地区',  '正式指标', '正式数值', '正式单位'
     '''
     try:
+        #logging.info("load config")
         cf = ConfigParser.ConfigParser()
         #cf.read('E:\\inidicator_apriori\\apriori.cfg')
         cf.read(cfg_file_name)
     except Exception,e:
         print "load cfg failed"
+        #logging.info("load config failed")
     #get buckets
     try:
+        #logging.info("get buckets_dicts")
         buckets_dicts = eval(cf.get('buckets_dicts', buckets_cls))
     except Exception,e:
         print  "get buckets_dicts failed",e
-        
+        #logging.info("get buckets_dicts")
     def get_flag(value):
         for key in buckets_dicts.keys():
             if key[0]<=value and value <= key[1]:
@@ -94,13 +97,16 @@ def indicator_classify(datafile,buckets_cls):
         return None    
     
     #载入数据
+    #logging.info("read table")
     data = pd.read_table(datafile)
     #列名重命名
+    #logging.info("rename table")
     data = data.rename(columns={'时间顺序排序':'month', '地区':'area', 
                                 '正式指标':'indicator', '正式数值':'value', '正式单位':'unit'})
     #所有指标
     indicators = data.indicator.unique()
     #过滤掉月份数据不足的指标数据
+    #logging.info("delete null ")
     data = delete_empty_month(data, indicators)
     print "calculate indicator num ratio"
     con_list = []
@@ -129,6 +135,7 @@ def indicator_classify(datafile,buckets_cls):
         #print ratio_data
         con_list.append(ratio_data)
     print "concat data ..."
+    #logging.info("concat data ...")
     all_data = pd.concat(con_list,ignore_index=True)
     #形成新的列  年/月份_标识符   201101_K 的样式  
     months_list = all_data["month"].tolist()
@@ -149,6 +156,7 @@ def indicator_classify(datafile,buckets_cls):
     flag_dict =all_data['comb_str'].to_dict()
     flag_indi_dict = {}
     print "Transform data"
+    #logging.info("Transform data")
     for key,indicator in indi_dict.iteritems():
         if flag_dict.has_key(key):
             flag = flag_dict[key]
@@ -161,19 +169,26 @@ def indicator_classify(datafile,buckets_cls):
                 flag_indi_dict[flag] = []
                 flag_indi_dict[flag].append(indicator)
     #保存结果      
-    print "Save data..."      
-    with open("Apriori_indicators.txt","w") as f:
-        line_no = 0
-        for k,value_list in flag_indi_dict.iteritems():
-            line_no += 1
-            if line_no%100 == 0:
-                print line_no
-            #f.write(k+"\t")
-            f.write('\t'.join(value_list))
-            f.write("\n")
+    print "Save data..."    
+    #logging.info("save data") 
+#     try: 
+#         with open("Apriori_indicators.txt","w") as f:
+#             line_no = 0
+#             for k,value_list in flag_indi_dict.iteritems():
+#                 line_no += 1
+#                 if line_no%100 == 0:
+#                     print line_no
+#                 #f.write(k+"\t")
+#                 f.write('\t'.join(value_list))
+#                 f.write("\n")
+#     except Exception,e:
+#         print e
+#         logging.info("save data",e) 
+    #logging.info("return data") 
     return flag_indi_dict.values()
             
 if __name__ == "__main__":
+    logging.info("start indicator_apriori")
     optparser = OptionParser()
     optparser.add_option('-f', '--inputFile',
                          dest='input',
@@ -195,6 +210,9 @@ if __name__ == "__main__":
                          default='small')
     
     (options, args) = optparser.parse_args()
+    #logging.info("c="+str(options.minC))
+    #logging.info("S="+str(options.minS))
+    #logging.info("b="+str(options.buckets_cls))
     
     inFile = None
     if options.input is None:
@@ -205,7 +223,6 @@ if __name__ == "__main__":
     else:
             print 'No dataset filename specified, system with exit\n'
             sys.exit('System will exit')
-    
     minSupport = options.minS
     minConfidence = options.minC
     buckets_cls = options.buckets_cls
@@ -224,21 +241,22 @@ if __name__ == "__main__":
 #         else:
 #             logging.info("apriori api has execute successfully  ")
         
-    #apri_indi_set = indicator_classify("test.txt",buckets_cls)
-    inFile = "C:\Users\Administrator\Desktop\jck_table.txt"
     full_name = os.path.realpath(inFile)
     cfg_file_name = get_cfg_filename(full_name)
     pos = full_name.find(".txt")
     result_name = full_name[:pos] + "_result.txt"
-    
+    logging.info("start apriori!")
     try:
+        #logging.info("in try!")
+        #logging.info("inFile",str(inFile))
         apri_indi_set = indicator_classify(inFile,buckets_cls)
         print "excute apriori algorithm"
+        logging.info("excuting apriori!")
         rows_file = apriori.dataFromList(apri_indi_set)
         items, rules = apriori.runApriori(rows_file, minSupport, minConfidence)
         apriori.printResults(items, rules,result_name)
     except Exception,e:
-        logging.error("apriori api error",e)
+        logging.error("apriori api error",str(e))
     else:
         logging.info("apriori api has execute successfully  ")
     print "End!!"
